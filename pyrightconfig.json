@@ -1,0 +1,10 @@
+{
+  "pythonVersion": "3.11",
+  "venvPath": "ai-services/ai-services",
+  "venv": ".venv",
+  "extraPaths": [
+    "ai-services/ai-services",
+    "ai-services/ai-services/sentiment-service",
+    "ai-services/ai-services/similarity-service"
+  ]
+}
