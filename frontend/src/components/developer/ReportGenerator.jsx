@@ -8,9 +8,6 @@ import {
 } from "lucide-react";
 import { useApp } from "../../context/AppContext.jsx";
 import DevLayout from "../layout/DevLayout.jsx";
-import StatusBadge from "../common/StatusBadge.jsx";
-import BarChart from "./BarChart.jsx";
-import PieChart from "./PieChart.jsx";
 import api from "../../api.js";
 import { useEffect } from "react";
 
@@ -107,18 +104,6 @@ export default function ReportGenerator() {
     selectedClusters.includes(c.id),
   );
 
-  const reportBarData = [...filteredClusters]
-    .sort((a, b) => b.totalRequests - a.totalRequests)
-    .slice(0, 6)
-    .map((c) => ({
-      label: c.summarizedTitle,
-      upvotes: c.upvotes,
-      downvotes: c.downvotes,
-      total: c.upvotes + c.downvotes,
-      requests: c.totalRequests,
-      status: c.status,
-    }));
-
   const reportSentiment = (() => {
     const totalWeight = filteredClusters.reduce(
       (sum, c) => sum + Math.max(c.totalRequests, 1),
@@ -159,6 +144,16 @@ export default function ReportGenerator() {
 
     return { positive, neutral, negative, overall };
   })();
+
+  const selectedSummary = {
+    totalClusters: filteredClusters.length,
+    totalRequests: filteredClusters.reduce(
+      (sum, c) => sum + c.totalRequests,
+      0,
+    ),
+    totalUpvotes: filteredClusters.reduce((sum, c) => sum + c.upvotes, 0),
+    totalDownvotes: filteredClusters.reduce((sum, c) => sum + c.downvotes, 0),
+  };
 
   return (
     <DevLayout>
@@ -331,270 +326,170 @@ export default function ReportGenerator() {
                 id="report-content"
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden transition-colors"
               >
-                <div className="bg-gradient-to-r from-slate-900 to-blue-900 dark:from-slate-950 dark:to-blue-950 px-8 py-8 text-white transition-colors">
-                  <div className="flex items-start justify-between">
+                <div className="px-8 py-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-blue-300 text-sm font-medium mb-1">
-                        Analytics Report
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                        FRVS Analytics Report Preview
                       </p>
-                      <h2 className="text-2xl font-bold">
-                        {currentUser?.organization || "TechCorp Inc."}
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1 transition-colors">
+                        {currentUser?.organization || "FRVS Organization"}
                       </h2>
-                      <p className="text-slate-300 text-sm mt-1">
-                        Feature Request & Voting System
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">
+                        Feature request insights grouped by selected AI clusters
                       </p>
                     </div>
-                    <div className="text-right text-slate-400 text-xs">
+                    <div className="text-right text-xs text-slate-500 dark:text-slate-400 transition-colors">
                       <p>
-                        Generated:{" "}
+                        Generated on{" "}
                         {new Date().toLocaleDateString("en-US", {
-                          weekday: "long",
                           year: "numeric",
                           month: "long",
                           day: "numeric",
                         })}
                       </p>
-                      <p className="mt-0.5">
+                      <p className="mt-1">
                         Product Key: {currentUser?.productKey?.slice(0, 16)}...
                       </p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-4 gap-4 mt-6">
-                    {[
-                      {
-                        label: "Total Clusters",
-                        value: analytics.totalClusters,
-                      },
-                      { label: "Raw Requests", value: analytics.totalFeatures },
-                      {
-                        label: "Total Votes",
-                        value: analytics.totalVotes.toLocaleString(),
-                      },
-                      {
-                        label: "Avg Sentiment",
-                        value: `${Math.round(analytics.avgSentimentScore * 100)}%`,
-                      },
-                    ].map((s) => (
-                      <div key={s.label} className="bg-white/10 rounded-xl p-3">
-                        <p className="text-2xl font-bold">{s.value}</p>
-                        <p className="text-blue-200 text-xs mt-0.5">
-                          {s.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
-                <div className="px-8 py-6 space-y-8">
-                  <div>
-                    <h3 className="text-slate-800 dark:text-slate-200 font-bold text-lg mb-4 pb-2 border-b border-slate-100 dark:border-slate-800 transition-colors">
-                      Cluster Trends & Sentiment Snapshot
+                <div className="px-8 py-7 space-y-7">
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3 transition-colors">
+                      Executive Summary
                     </h3>
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                      <div className="xl:col-span-2">
-                        <BarChart
-                          data={reportBarData}
-                          title="Top Requested Cluster Vote Activity"
-                        />
-                      </div>
-                      <div>
-                        <PieChart
-                          data={reportSentiment}
-                          title="Selected Cluster Sentiment"
-                          subtitle="Weighted by request volume"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-slate-800 dark:text-slate-200 font-bold text-lg mb-4 pb-2 border-b border-slate-100 dark:border-slate-800 transition-colors">
-                      Summarized Feature Cluster Analysis
-                    </h3>
-                    <div className="space-y-5">
-                      {filteredClusters.map((cluster, idx) => (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {[
+                        {
+                          label: "Selected Clusters",
+                          value: selectedSummary.totalClusters,
+                        },
+                        {
+                          label: "Selected Requests",
+                          value: selectedSummary.totalRequests,
+                        },
+                        {
+                          label: "Upvotes",
+                          value: selectedSummary.totalUpvotes,
+                        },
+                        {
+                          label: "Downvotes",
+                          value: selectedSummary.totalDownvotes,
+                        },
+                        {
+                          label: "Weighted Sentiment",
+                          value: `${Math.round(reportSentiment.positive * 100)}% positive`,
+                        },
+                      ].map((item) => (
                         <div
-                          key={cluster.id}
-                          className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden transition-colors"
+                          key={item.label}
+                          className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 transition-colors"
                         >
-                          <div className="bg-slate-50 dark:bg-slate-800/50 px-5 py-3 flex items-center justify-between transition-colors">
-                            <div className="flex items-center gap-3">
-                              <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 transition-colors">
-                                {idx + 1}
-                              </span>
-                              <div>
-                                <h4 className="text-slate-800 dark:text-slate-200 font-semibold text-sm transition-colors">
-                                  {cluster.summarizedTitle}
-                                </h4>
-                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                  <StatusBadge status={cluster.status} />
-                                  {cluster.tags.map((t) => (
-                                    <span
-                                      key={t}
-                                      className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-[10px] px-1.5 py-0.5 rounded transition-colors"
-                                    >
-                                      {t}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-slate-600 dark:text-slate-400 text-xs transition-colors">
-                                {cluster.totalRequests} requests
-                              </p>
-                              <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5 transition-colors">
-                                {cluster.upvotes + cluster.downvotes} votes
-                              </p>
-                            </div>
-                          </div>
-                          <div className="px-5 py-4">
-                            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4 transition-colors">
-                              {cluster.summarizedDescription}
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2 transition-colors">
-                                  Vote Distribution
-                                </p>
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden transition-colors">
-                                      <div
-                                        className="h-full bg-blue-500 dark:bg-blue-600 rounded-full transition-colors"
-                                        style={{
-                                          width: `${Math.round((cluster.upvotes / Math.max(cluster.upvotes + cluster.downvotes, 1)) * 100)}%`,
-                                        }}
-                                      />
-                                    </div>
-                                    <span className="text-blue-600 dark:text-blue-400 text-xs font-medium w-10 text-right transition-colors">
-                                      {cluster.upvotes} ↑
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden transition-colors">
-                                      <div
-                                        className="h-full bg-rose-400 dark:bg-rose-500 rounded-full transition-colors"
-                                        style={{
-                                          width: `${Math.round((cluster.downvotes / Math.max(cluster.upvotes + cluster.downvotes, 1)) * 100)}%`,
-                                        }}
-                                      />
-                                    </div>
-                                    <span className="text-rose-500 dark:text-rose-400 text-xs font-medium w-10 text-right transition-colors">
-                                      {cluster.downvotes} ↓
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div>
-                                <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2 transition-colors">
-                                  Sentiment
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-xs font-semibold px-2 py-1 rounded-lg transition-colors ${sentimentColor(cluster.sentimentScore.overall)}`}
-                                  >
-                                    {cluster.sentimentScore.overall}
-                                  </span>
-                                  <div className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
-                                    {Math.round(
-                                      cluster.sentimentScore.positive * 100,
-                                    )}
-                                    % pos ·{" "}
-                                    {Math.round(
-                                      cluster.sentimentScore.neutral * 100,
-                                    )}
-                                    % neu ·{" "}
-                                    {Math.round(
-                                      cluster.sentimentScore.negative * 100,
-                                    )}
-                                    % neg
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-4">
-                              <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2 transition-colors">
-                                Top Raw Requests in this Cluster
-                              </p>
-                              <div className="space-y-2">
-                                {cluster.relatedFeatures
-                                  .slice(0, 4)
-                                  .map((feature) => (
-                                    <div
-                                      key={feature.id}
-                                      className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 transition-colors"
-                                    >
-                                      <div className="min-w-0">
-                                        <p className="text-slate-700 dark:text-slate-300 text-sm font-medium line-clamp-1 transition-colors">
-                                          {feature.title}
-                                        </p>
-                                        <p className="text-slate-400 dark:text-slate-500 text-[11px] mt-0.5 transition-colors">
-                                          by {feature.userName}
-                                        </p>
-                                      </div>
-                                      <div className="text-right flex-shrink-0 text-xs text-slate-500 dark:text-slate-400 transition-colors">
-                                        <p>{feature.upvotes} ↑</p>
-                                        <p>{feature.commentCount} comments</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          </div>
+                          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                            {item.label}
+                          </p>
+                          <p className="text-lg font-semibold text-slate-900 dark:text-white mt-1 transition-colors">
+                            {item.value}
+                          </p>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </section>
 
-                  <div className="border-t border-slate-100 dark:border-slate-800 pt-6 transition-colors">
-                    <h3 className="text-slate-800 dark:text-slate-200 font-bold text-base mb-3 transition-colors">
-                      Summary & Recommendations
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3 transition-colors">
+                      Cluster Breakdown
                     </h3>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl p-5 text-sm text-blue-800 dark:text-blue-300 leading-relaxed space-y-2 transition-colors">
-                      <p>
-                        Based on the analysis of {analytics.totalFeatures} raw
-                        feature requests grouped into {analytics.totalClusters}{" "}
-                        summarized clusters:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 text-blue-700 dark:text-blue-400/90">
-                        <li>
-                          The report is organized around AI-summarized feature
-                          clusters so repeated requests are analyzed as one
-                          product theme.
-                        </li>
-                        <li>
-                          Prioritize the highest-vote open clusters first,
-                          especially those with high request volume and positive
-                          sentiment momentum.
-                        </li>
-                        <li>
-                          Use the raw request samples in each cluster to
-                          validate whether the summary still matches the
-                          underlying user intent.
-                        </li>
-                        <li>
-                          Overall platform sentiment is{" "}
-                          <strong className="dark:text-white">
-                            {Math.round(analytics.avgSentimentScore * 100)}%
-                            positive
-                          </strong>
-                          , which suggests the roadmap is still aligned with
-                          user needs.
-                        </li>
-                      </ul>
+                    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-100 dark:bg-slate-800/70 transition-colors">
+                          <tr>
+                            <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                              Cluster
+                            </th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                              Status
+                            </th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                              Requests
+                            </th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                              Votes
+                            </th>
+                            <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 transition-colors">
+                              Sentiment
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredClusters.map((cluster) => (
+                            <tr
+                              key={cluster.id}
+                              className="border-t border-slate-100 dark:border-slate-800 transition-colors"
+                            >
+                              <td className="px-4 py-3 align-top">
+                                <p className="font-medium text-slate-800 dark:text-slate-200 transition-colors">
+                                  {cluster.summarizedTitle}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 transition-colors">
+                                  {cluster.summarizedDescription}
+                                </p>
+                              </td>
+                              <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-300 transition-colors">
+                                {String(cluster.status || "-").replace(
+                                  "_",
+                                  " ",
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-300 transition-colors">
+                                {cluster.totalRequests}
+                              </td>
+                              <td className="px-4 py-3 text-center text-slate-700 dark:text-slate-300 transition-colors">
+                                {cluster.upvotes} / {cluster.downvotes}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span
+                                  className={`inline-flex rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${sentimentColor(cluster.sentimentScore.overall)}`}
+                                >
+                                  {cluster.sentimentScore.overall}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3 transition-colors">
+                      Recommendations
+                    </h3>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-2 transition-colors">
+                      <p>
+                        Prioritize clusters with high request volume and a
+                        strong upvote ratio to maximize impact in upcoming
+                        roadmap cycles.
+                      </p>
+                      <p>
+                        Review clusters marked negative or neutral in sentiment
+                        before final planning to avoid releasing changes that
+                        may not meet user expectations.
+                      </p>
+                      <p>
+                        Validate summary wording against the top raw requests in
+                        each cluster to ensure grouped themes still reflect
+                        actual user intent.
+                      </p>
+                    </div>
+                  </section>
                 </div>
 
-                <div className="px-8 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 flex items-center justify-between transition-colors">
-                  <span>Generated by FRVS Platform · AI-Powered Analytics</span>
-                  <span>
-                    {new Date().getFullYear()} {currentUser?.organization}
-                  </span>
+                <div className="px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between transition-colors">
+                  <span>Preview reflects selected clusters only</span>
+                  <span>Generated by FRVS Platform</span>
                 </div>
               </div>
             )}

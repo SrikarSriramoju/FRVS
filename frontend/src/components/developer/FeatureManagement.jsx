@@ -64,6 +64,13 @@ const statusTone = {
   },
 };
 
+function getFeatureClusterId(feature) {
+  if (!feature) return null;
+  if (feature.clusterId) return feature.clusterId;
+  if (feature.cluster && feature.cluster.id) return feature.cluster.id;
+  return null;
+}
+
 function StatusDropdown({ featureId, current }) {
   const { updateFeatureStatus } = useApp();
   const [open, setOpen] = useState(false);
@@ -248,7 +255,10 @@ export default function FeatureManagement() {
 
   const filtered = features
     .filter((f) => statusFilter === "ALL" || f.status === statusFilter)
-    .filter((f) => clusterFilter === "ALL" || f.clusterId === clusterFilter)
+    .filter(
+      (f) =>
+        clusterFilter === "ALL" || getFeatureClusterId(f) === clusterFilter,
+    )
     .filter(
       (f) =>
         !search ||
@@ -356,7 +366,9 @@ export default function FeatureManagement() {
                   <FeatureRow
                     key={f.id}
                     feature={f}
-                    cluster={clusters.find((c) => c.id === f.clusterId)}
+                    cluster={clusters.find(
+                      (c) => c.id === getFeatureClusterId(f),
+                    )}
                   />
                 ))}
                 {filtered.length === 0 && (
