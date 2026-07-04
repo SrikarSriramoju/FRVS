@@ -1,0 +1,32 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: frvs-backend
+  datasource:
+    # Looks for DB_URL variable. Falls back to a standard local MySQL connection string if empty.
+    url: ${DB_URL:jdbc:mysql://${MYSQL_HOST:gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com}:${MYSQL_PORT:4000}/${MYSQL_DB:FRVSystem}}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    port: ${MYSQL_PORT:4000}
+    host: ${MYSQL_HOST:gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com}
+    database: ${MYSQL_DB:FRVSystem}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+app:
+  jwtSecret: ${JWT_SECRET:mySuperSecretDefaultKey123!}
+  jwtExpirationMs: ${JWT_EXPIRATION:86400000} # 24 hours
+
+ai:
+  similarity-service:
+    url: ${AI_SIMILARITY_URL:http://localhost:8000/similarity}
+  sentiment-service:
+    url: ${AI_SENTIMENT_URL:http://localhost:8001/sentiment}
