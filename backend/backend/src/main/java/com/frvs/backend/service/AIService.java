@@ -92,7 +92,7 @@ public class AIService {
 
         try {
             AISimilarityResponse response = callSimilarityService(request)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(60))
                     .block();
 
             int resultCount = response == null || response.getResults() == null ? 0 : response.getResults().size();
@@ -100,8 +100,10 @@ public class AIService {
                     similarityUrl,
                     resultCount);
         } catch (Exception e) {
-            log.error("Similarity service startup probe failed for {}", similarityUrl, e);
-            throw new IllegalStateException("Similarity service startup probe failed", e);
+            log.warn(
+                "Similarity service unavailable during startup. " +
+                "Application will continue and retry during normal requests.",e
+            );
         }
     }
 
