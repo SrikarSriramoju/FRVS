@@ -100,12 +100,32 @@ public class AIService {
                     similarityUrl,
                     resultCount);
         } catch (Exception e) {
-            log.warn(
-                "Similarity service unavailable during startup. " +
-                "Application will continue and retry during normal requests.",e
-            );
+            log.warn("Similarity service unavailable during startup. Application will continue and retry during normal requests.", e);
         }
     }
+
+    public void verifySentimentServiceConnectivity() {
+        AISentimentRequest request = new AISentimentRequest();
+        request.setComment_id("startup-probe");
+        request.setText("Spring Boot sentiment service startup probe");
+
+        try {
+            AISentimentResponse response = webClient.post()
+                    .uri(sentimentUrl)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(AISentimentResponse.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .block();
+
+            String sentiment = response == null ? "null" : response.getSentiment();
+            log.info("Sentiment service startup probe succeeded for {} with sentiment={}", sentimentUrl, sentiment);
+        } catch (Exception e) {
+            log.error("Sentiment service startup probe failed for {}", sentimentUrl, e);
+            throw new IllegalStateException("Sentiment service startup probe failed", e);
+        }
+    }
+    
 
     private Mono<AISimilarityResponse> callSimilarityService(AISimilarityRequest request) {
         if (!StringUtils.hasText(similarityToken)) {

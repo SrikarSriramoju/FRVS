@@ -19,12 +19,19 @@ public class AIServiceStartupProbe {
 
     @EventListener(ApplicationReadyEvent.class)
     public void verifySimilarityServiceOnStartup() {
-        log.info("Checking AI similarity service connectivity during Spring Boot startup...");
+        log.info("Checking AI service connectivity during Spring Boot startup...");
         try {
             aiService.verifySimilarityServiceConnectivity();
             log.info("AI similarity service is reachable and authenticated successfully.");
         } catch (Exception e) {
             log.error("AI similarity service startup check failed. Please verify the Hugging Face token, URL, and network connectivity.", e);
+        }
+
+        try {
+            aiService.verifySentimentServiceConnectivity();
+            log.info("AI sentiment service is reachable and responding successfully.");
+        } catch (Exception e) {
+            log.error("AI sentiment service startup check failed. Please verify the sentiment service URL and network connectivity.", e);
         }
     }
 }
