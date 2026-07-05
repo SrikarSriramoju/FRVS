@@ -27,6 +27,7 @@ app:
 
 ai:
   similarity-service:
-    url: ${AI_SIMILARITY_URL:http://localhost:8000/similarity}
+    url: ${AI_SIMILARITY_URL:https://srikar140-ai-similarity.hf.space/similarity}
+    token: ${AI_SIMILARITY_TOKEN:}
   sentiment-service:
     url: ${AI_SENTIMENT_URL:http://localhost:8001/sentiment}

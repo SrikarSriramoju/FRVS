@@ -12,7 +12,10 @@ import com.frvs.backend.entity.Vote;
 import com.frvs.backend.repository.FeatureClusterRepository;
 import com.frvs.backend.repository.FeatureRequestRepository;
 import com.frvs.backend.repository.VoteRepository;
+
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class FeatureService {
+
+    private static final Logger log = LoggerFactory.getLogger(FeatureService.class);
 
     private final FeatureRequestRepository featureRepository;
     private final FeatureClusterRepository clusterRepository;
@@ -59,8 +64,12 @@ public class FeatureService {
     }
 
     private void clusterFeature(FeatureRequest feature) {
+        log.info("Starting clustering for featureId={}, title='{}', productKey={}",
+                feature.getId(), feature.getTitle(), feature.getProductKey());
+
         List<FeatureCluster> existingClusters = clusterRepository.findByProductKey(feature.getProductKey());
         if(existingClusters.isEmpty()){
+            log.info("No existing clusters found for productKey={}. Creating a new cluster.", feature.getProductKey());
             createNewCluster(feature);
             return;
         }
@@ -76,7 +85,13 @@ public class FeatureService {
         }).collect(Collectors.toList());
         request.setExisting_features(list);
 
+        log.info("Calling similarity service for featureId={} with {} candidate clusters", feature.getId(), list.size());
+
         AISimilarityResponse response = aiService.getSimilarity(request);
+
+        log.info("Similarity service returned {} results for featureId={}",
+            response.getResults() == null ? 0 : response.getResults().size(),
+            feature.getId());
 
         if(response.getResults() != null && !response.getResults().isEmpty()) {
             // Find highest score
@@ -88,6 +103,8 @@ public class FeatureService {
                 // Attach to existing cluster
                 FeatureCluster cluster = clusterRepository.findById(bestMatch.getFeature_id()).orElse(null);
                 if(cluster != null) {
+                    log.info("Best similarity match found for featureId={} -> clusterId={} score={}",
+                            feature.getId(), bestMatch.getFeature_id(), bestMatch.getScore());
                     feature.setCluster(cluster);
                     featureRepository.save(feature);
                     refreshClusterSummary(cluster.getId());
@@ -96,6 +113,7 @@ public class FeatureService {
             }
         }
         
+        log.info("No strong similarity match found for featureId={}. Creating a new cluster.", feature.getId());
         createNewCluster(feature);
     }
 
